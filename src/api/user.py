@@ -1,7 +1,8 @@
 from flask import request, jsonify
 from src.models.user import User  # Ensure correct import for the User model
 from src.api.app import db  # Use the same db instance from app initialization
-
+from src.schemas.user import UserCreateSchema, UserUpdateSchema  # Import the Pydantic schemas
+from pydantic import ValidationError  # To handle validation errors
 
 class CommonUser:
     def __init__(self, app):
@@ -20,10 +21,15 @@ class CommonUser:
         :return:
         """
         data = request.get_json()
-        if not data or not all(k in data for k in ("username", "email", "password")):
-            return jsonify({"error": "Invalid data"}), 400
+        try:
+            # Validate incoming data with Pydantic
+            user_data = UserCreateSchema(**data)
+        except ValidationError as e:
+            # If validation fails, return the error details
+            return jsonify({"error": e.errors()}), 400
 
-        new_user = User(username=data["username"], email=data["email"], password=data["password"])
+        # Create new user
+        new_user = User(username=user_data.username, email=user_data.email, password=user_data.password)
         db.session.add(new_user)
         db.session.commit()
         return jsonify({"message": "User created successfully", "user": {"id": new_user.id}}), 201
@@ -61,13 +67,21 @@ class CommonUser:
         :return:
         """
         data = request.get_json()
-        user =User.query.get(user_id)
+        try:
+            # Validate incoming data with Pydantic
+            user_data = UserUpdateSchema(**data)
+        except ValidationError as e:
+            # If validation fails, return the error details
+            return jsonify({"error": e.errors()}), 400
+
+        user = User.query.get(user_id)
         if not user:
             return jsonify({"error": "User not found"}), 404
 
-        user.username = data.get("username", user.username)
-        user.email = data.get("email", user.email)
-        user.password = data.get("password", user.password)
+        # Update user fields with validated data
+        user.username = user_data.username or user.username
+        user.email = user_data.email or user.email
+        user.password = user_data.password or user.password
         db.session.commit()
         return jsonify({"message": "User updated successfully"}), 200
 
