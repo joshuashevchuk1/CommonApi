@@ -1,6 +1,9 @@
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 
+# all apis on models
+from src.api.user import CommonUser
+
 # Initialize the SQLAlchemy object globally
 db = SQLAlchemy()
 
@@ -19,6 +22,9 @@ class CommonApp:
         # Create the database tables if they don't exist
         with self.app.app_context():
             db.create_all()
+
+        # initialize all user routes
+        common_user = CommonUser(self.app)
 
     def home(self):
         return "ok", 200
