@@ -1,30 +1,27 @@
 from flask import Flask
-from flask_sqlalchemy import SQLAlchemy
+from src.api.database import db
 
 # all apis on models
-from src.api.user import CommonUser
-
-# Initialize the SQLAlchemy object globally
-db = SQLAlchemy()
+import src.api.user as user
 
 class CommonApp:
     def __init__(self, port):
         self.port = port
         self.app = Flask(__name__)
 
-        # Configure the database URI (using SQLite as an example)
+        # Configure the database.py URI (using SQLite as an example)
         self.app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///app.db'
         self.app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
         # Initialize SQLAlchemy with the app
         db.init_app(self.app)
 
-        # Create the database tables if they don't exist
+        # Create the database.py tables if they don't exist
         with self.app.app_context():
             db.create_all()
 
         # initialize all user routes
-        common_user = CommonUser(self.app)
+        self.common_user = user.CommonUser(self.app)
 
     def home(self):
         return "ok", 200
@@ -39,6 +36,7 @@ class CommonApp:
         self.app.add_url_rule(
             '/healthCheck', 'health_check', self.health_check, methods=["GET"]
         )
+        self.common_user.add_routes()
 
     def run_server(self):
         self.add_routes()

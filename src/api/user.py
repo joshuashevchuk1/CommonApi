@@ -1,6 +1,6 @@
 from flask import request, jsonify
-import src.models.user as user_model
-from src.api.app import db
+from src.models.user import User  # Ensure correct import for the User model
+from src.api.app import db  # Use the same db instance from app initialization
 
 
 class CommonUser:
@@ -10,7 +10,7 @@ class CommonUser:
 
     def create_user(self):
         """
-        curl -X POST http://127.0.0.1:5000/user \
+        curl -X POST http://127.0.0.1:9020/user \
             -H "Content-Type: application/json" \
             -d '{
                 "username": "testuser",
@@ -23,7 +23,7 @@ class CommonUser:
         if not data or not all(k in data for k in ("username", "email", "password")):
             return jsonify({"error": "Invalid data"}), 400
 
-        new_user = user_model.User(username=data["username"], email=data["email"], password=data["password"])
+        new_user = User(username=data["username"], email=data["email"], password=data["password"])
         db.session.add(new_user)
         db.session.commit()
         return jsonify({"message": "User created successfully", "user": {"id": new_user.id}}), 201
@@ -33,7 +33,7 @@ class CommonUser:
         get all users
         :return:
         """
-        users = user_model.User.query.all()
+        users = User.query.all()
         user_list = [{"id": u.id, "username": u.username, "email": u.email} for u in users]
         return jsonify({"users": user_list}), 200
 
@@ -43,14 +43,14 @@ class CommonUser:
         :param user_id:
         :return:
         """
-        user = user_model.User.query.get(user_id)
+        user = User.query.get(user_id)
         if not user:
             return jsonify({"error": "User not found"}), 404
         return jsonify({"id": user.id, "username": user.username, "email": user.email}), 200
 
     def update_user(self, user_id):
         """
-        curl -X PUT http://127.0.0.1:5000/user/1 \
+        curl -X PUT http://127.0.0.1:9020/user/1 \
             -H "Content-Type: application/json" \
             -d '{
                 "username": "updateduser",
@@ -61,7 +61,7 @@ class CommonUser:
         :return:
         """
         data = request.get_json()
-        user = user_model.User.query.get(user_id)
+        user =User.query.get(user_id)
         if not user:
             return jsonify({"error": "User not found"}), 404
 
@@ -73,11 +73,11 @@ class CommonUser:
 
     def delete_user(self, user_id):
         """
-        curl -X DELETE http://127.0.0.1:5000/user/1
+        curl -X DELETE http://127.0.0.1:9020/user/1
         :param user_id:
         :return:
         """
-        user = user_model.User.query.get(user_id)
+        user = User.query.get(user_id)
         if not user:
             return jsonify({"error": "User not found"}), 404
 
