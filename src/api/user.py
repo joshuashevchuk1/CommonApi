@@ -21,6 +21,7 @@ class CommonUser:
         :return:
         """
         data = request.get_json()
+
         try:
             # Validate incoming data with Pydantic
             user_data = UserCreateSchema(**data)
@@ -28,10 +29,16 @@ class CommonUser:
             # If validation fails, return the error details
             return jsonify({"error": e.errors()}), 400
 
-        # Create new user
+        # Check if the email already exists in the database
+        existing_user = User.query.filter_by(email=user_data.email).first()
+        if existing_user:
+            return jsonify({"error": "Email already in use"}), 400
+
+        # Create new user if the email is unique
         new_user = User(username=user_data.username, email=user_data.email, password=user_data.password)
         db.session.add(new_user)
         db.session.commit()
+
         return jsonify({"message": "User created successfully", "user": {"id": new_user.id}}), 201
 
     def get_users(self):
@@ -67,6 +74,7 @@ class CommonUser:
         :return:
         """
         data = request.get_json()
+
         try:
             # Validate incoming data with Pydantic
             user_data = UserUpdateSchema(**data)
@@ -74,15 +82,23 @@ class CommonUser:
             # If validation fails, return the error details
             return jsonify({"error": e.errors()}), 400
 
+        # Retrieve the user from the database
         user = User.query.get(user_id)
         if not user:
             return jsonify({"error": "User not found"}), 404
+
+        # Check if the email is being updated and if it already exists
+        if user_data.email and user_data.email != user.email:
+            existing_user = User.query.filter_by(email=user_data.email).first()
+            if existing_user:
+                return jsonify({"error": "Email already in use"}), 400
 
         # Update user fields with validated data
         user.username = user_data.username or user.username
         user.email = user_data.email or user.email
         user.password = user_data.password or user.password
         db.session.commit()
+
         return jsonify({"message": "User updated successfully"}), 200
 
     def delete_user(self, user_id):
