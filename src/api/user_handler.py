@@ -1,7 +1,7 @@
 from flask import request, jsonify
-from src.models.user import User  # Ensure correct import for the User model
+from src.models.user_model import User  # Ensure correct import for the User model
 from src.api.app import db  # Use the same db instance from app initialization
-from src.schemas.user import UserCreateSchema, UserUpdateSchema  # Import the Pydantic schemas
+from src.schemas.user_schemas import UserCreateSchema, UserUpdateSchema  # Import the Pydantic schemas
 from pydantic import ValidationError  # To handle validation errors
 
 class CommonUser:

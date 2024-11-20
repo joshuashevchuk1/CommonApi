@@ -2,7 +2,7 @@ from flask import Flask
 from src.api.database import db
 
 # all apis on models
-import src.api.user as user
+import src.api.user_handler as user
 
 class CommonApp:
     def __init__(self, port):
